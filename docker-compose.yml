@@ -1,0 +1,51 @@
+services:
+  search:
+    container_name: search
+    # restart: always
+    build:
+      context: ./
+      dockerfile: ./apps/search/Dockerfile
+    volumes:
+      - /usr/src/app/node_modules]
+    command: ['pm2-runtime', 'dist/apps/search/main.js']
+
+  etl_service:
+    container_name: etl_service
+    # restart: always
+    build:
+      context: ./
+      dockerfile: ./apps/etl_service/Dockerfile
+    volumes:
+      - /usr/src/app/node_modules
+    command: ['pm2-runtime', 'dist/apps/etl_service/main.js']
+
+  api_gateway:
+    container_name: api_gateway
+    # restart: always
+    ports:
+      - '8080:8080'
+    depends_on:
+      - search
+      - etl_service
+      - nats
+    build:
+      context: ./
+      dockerfile: ./apps/api_gateway/Dockerfile
+    volumes:
+      - /usr/src/app/node_modules
+    command: ['pm2-runtime', 'dist/apps/api_gateway/main.js']
+
+  nats:
+    image: nats
+    ports:
+      - 4222:4222
+#   mysql_db:
+#     image: mysql
+#     ports:
+#       - "3307:3307"
+#     environment:
+#       - MYSQL_ROOT_PASSWORD=root_password_123
+#       - MYSQL_DATABASE=nestjs_db
+#       - MYSQL_USER=testuser
+#       - MYSQL_PASSWORD=testuser123
+#       - MYSQL_TCP_PORT=3307
